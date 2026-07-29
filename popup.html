@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>&#34920;&#26684;&#19987;&#27880;&#35745;&#26102;&#22120;</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <p class="eyebrow">WORK SESSION</p>
+        <div id="statusBadge" class="status-badge status-idle">&#26410;&#24320;&#22987;</div>
+      </header>
+
+      <section id="unsupported" class="notice hidden">
+        <div class="notice-icon">&#8594;</div>
+        <div>
+          <strong>&#35831;&#20999;&#25442;&#21040; Google &#34920;&#26684;</strong>
+          <p>&#25171;&#24320; docs.google.com/spreadsheets &#26631;&#31614;&#39029;&#21518;&#21363;&#21487;&#24320;&#22987;&#35760;&#24405;&#12290;</p>
+        </div>
+      </section>
+
+      <section id="workspace" class="workspace">
+        <div class="title-row">
+          <div class="title-copy">
+            <p class="section-label">&#24403;&#21069;&#20219;&#21153;</p>
+            <h2 id="sheetTitle">&#35835;&#21462;&#20013;&#8230;</h2>
+          </div>
+          <button id="copySummary" class="icon-button" type="button" title="&#22797;&#21046;&#21517;&#31216;&#21644;&#24635;&#26102;&#38271;" aria-label="&#22797;&#21046;&#21517;&#31216;&#21644;&#24635;&#26102;&#38271;">&#22797;&#21046;</button>
+        </div>
+
+        <div class="timer-card">
+          <div class="timer-label">&#26412;&#27425;&#24635;&#35745;</div>
+          <div id="totalTime" class="total-time">00:00:00</div>
+          <div class="timer-progress"><span id="progressBar"></span></div>
+          <p id="liveHint" class="live-hint">&#20934;&#22791;&#22909;&#21518;&#24320;&#22987;&#35760;&#24405;</p>
+        </div>
+
+        <div class="controls" aria-label="&#35745;&#26102;&#25511;&#21046;">
+          <button id="startButton" class="button button-primary" type="button">&#9654; &#24320;&#22987;</button>
+          <button id="pauseButton" class="button button-secondary" type="button">&#10074;&#10074; &#26242;&#20572;</button>
+          <button id="resumeButton" class="button button-primary hidden" type="button">&#9654; &#32487;&#32493;</button>
+          <button id="stopButton" class="button button-danger" type="button">&#9632; &#20572;&#27490;</button>
+        </div>
+
+        <section class="all-tasks-section">
+          <div class="section-heading">
+            <div>
+              <p class="section-label">&#20840;&#37096;&#20219;&#21153;</p>
+              <h3 id="taskCount">0 &#20010;&#20219;&#21153;</h3>
+            </div>
+            <div class="bulk-actions">
+              <button id="copyAllTasks" class="text-button" type="button">&#22797;&#21046;&#20840;&#37096;&#35760;&#24405;</button>
+              <button id="exportSchedule" class="text-button" type="button">&#23548;&#20986;</button>
+            </div>
+          </div>
+          <div class="history-bar">
+            <label for="historyDate">&#26085;&#26399;&#21382;&#21490;</label>
+            <select id="historyDate"><option value="">&#20840;&#37096;&#26085;&#26399;</option></select>
+          </div>
+          <div id="taskList" class="task-list">
+            <div class="empty-state"><span>&#9775;</span><p>&#24320;&#22987;&#35745;&#26102;&#21518;&#65292;&#35760;&#24405;&#20250;&#26174;&#31034;&#22312;&#36825;&#37324;&#12290;</p></div>
+          </div>
+        </section>
+
+        <footer class="footer-note"><span class="green-dot"></span> &#25968;&#25454;&#21482;&#20445;&#23384;&#22312;&#26412;&#26426;&#27983;&#35272;&#22120;&#20013;</footer>
+      </section>
+    </main>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="popup.js"></script>
+  </body>
+</html>

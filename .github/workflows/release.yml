@@ -1,0 +1,63 @@
+name: Release Browser Extension
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+      attestations: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate version and extension sources
+        shell: bash
+        run: |
+          VERSION="$(node -p "require('./manifest.json').version")"
+          if [ "v${VERSION}" != "${GITHUB_REF_NAME}" ]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match manifest version ${VERSION}."
+            exit 1
+          fi
+          node --check background.js
+          node --check content-script.js
+          node --check popup.js
+          node -e "JSON.parse(require('fs').readFileSync('manifest.json', 'utf8'))"
+
+      - name: Scan packaged sources for secrets
+        shell: bash
+        run: |
+          if grep -R -nE 'AIza[0-9A-Za-z_-]{20,}|sk-[A-Za-z0-9_-]{16,}|Bearer[[:space:]]+[A-Za-z0-9._-]{16,}|PRIVATE[_A-Z]*[[:space:]]*=[[:space:]]*[^[:space:]]+|SECRET[_A-Z]*[[:space:]]*=[[:space:]]*[^[:space:]]+|docs\.google\.com/spreadsheets/d/[A-Za-z0-9_-]+' -- *.js *.json *.html *.css README.md; then
+            echo 'Potential secret or private spreadsheet identifier found.'
+            exit 1
+          fi
+
+      - name: Assemble unpacked extension
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp background.js content-script.js popup.js popup.html popup.css manifest.json dist/
+          test -f dist/manifest.json
+
+      - name: Package extension
+        shell: bash
+        run: |
+          cd dist
+          zip -r "../checker-${GITHUB_REF_NAME}.zip" .
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: 'checker-*.zip'
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: 'checker-*.zip'
+          generate_release_notes: true
