@@ -163,14 +163,18 @@
 
   refs.dragBar.addEventListener('pointerdown', startDrag);
   refs.compactDrag.addEventListener('pointerdown', startDrag);
-  refs.collapse.addEventListener('click', () => { compact = true; renderCompact(); });
-  refs.expand.addEventListener('click', () => { compact = false; renderCompact(); });
+  refs.collapse.addEventListener('click', () => { compact = true; sync().catch(() => {}); renderCompact(); });
+  refs.expand.addEventListener('click', () => { compact = false; sync().catch(() => {}); renderCompact(); });
   refs.start.addEventListener('click', () => timerAction('start'));
   refs.resume.addEventListener('click', () => timerAction('resume'));
   refs.pause.addEventListener('click', () => timerAction('pause'));
   refs.stop.addEventListener('click', () => timerAction('stop'));
 
-  chrome.runtime.onMessage.addListener((message) => {
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.type === 'get-sheet-title') {
+      sendResponse({ title: getSheetTitle() });
+      return true;
+    }
     if (message.type === 'timer-task-updated') sync().catch(() => {});
   });
   setInterval(() => { if (task?.status === 'running') renderCompact(); }, 1000);

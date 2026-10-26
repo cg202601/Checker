@@ -23,7 +23,7 @@ function formatDuration(ms) {
 }
 
 function formatClock(timestamp) {
-  return new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(timestamp);
+  return new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit' }).format(timestamp);
 }
 
 function getTaskTotalMs(task, intervals = null) {
@@ -104,9 +104,10 @@ function escapeHtml(value) {
 
 function formatTaskForCopy(task, intervals = getTaskIntervals(task)) {
   const title = task?.title || '\u672a\u547d\u540d\u8868\u683c';
-  const lines = [title + ' \uFF5C\u603B\u8BA1 ' + formatDuration(getTaskTotalMs(task, intervals))];
-  if (intervals.length) lines.push(...intervals.map(intervalText));
-  return lines.join('\n');
+  const summary = title + '\uFF5C\u603B\u8BA1' + formatDuration(getTaskTotalMs(task, intervals));
+  return intervals.length
+    ? intervals.map((interval) => intervalText(interval) + ' ' + summary).join('\n')
+    : summary;
 }
 
 function getTaskStatusLabel(status) {
@@ -142,23 +143,23 @@ function renderTaskList() {
     const status = task.status || 'idle';
     const details = intervals.length
       ? intervals.map((interval) => {
-          if (interval.live) {
-            return '<div class="task-interval"><div class="task-interval-row"><div class="task-interval-main">' +
-              escapeHtml(formatClock(interval.start) + ' \u2014 ' + formatClock(interval.end)) +
-              '<span class="task-interval-duration">\u8fdb\u884c\u4e2d</span></div></div></div>';
-          }
-          const index = interval.sourceIndex;
-          return '<div class="task-interval" data-interval-index="' + index + '">' +
-            '<div class="task-interval-row"><div class="task-interval-main">' +
-            escapeHtml(formatClock(interval.start) + ' \u2014 ' + formatClock(interval.end)) +
-            '<span class="task-interval-duration">' + escapeHtml(formatDuration(Math.max(0, interval.end - interval.start))) + '</span></div>' +
-            '<div class="task-interval-actions"><button type="button" class="interval-action" data-edit-interval>\u7f16\u8f91</button><button type="button" class="interval-action interval-delete" data-delete-interval>\u6e05\u9664</button></div></div>' +
-            '<form class="interval-editor hidden" data-edit-form="' + index + '">' +
-            '<label>\u5f00\u59cb <input name="start" type="datetime-local" step="1" value="' + escapeHtml(toDateTimeLocal(interval.start)) + '" required></label>' +
-            '<label>\u7ed3\u675f <input name="end" type="datetime-local" step="1" value="' + escapeHtml(toDateTimeLocal(interval.end)) + '" required></label>' +
-            '<div class="interval-editor-actions"><button type="submit" class="interval-action interval-save">\u4fdd\u5b58</button><button type="button" class="interval-action" data-cancel-edit>\u53d6\u6d88</button></div>' +
-            '</form></div>';
-        }).join('')
+        if (interval.live) {
+          return '<div class="task-interval"><div class="task-interval-row"><div class="task-interval-main">' +
+            escapeHtml(formatClock(interval.start) + '\u2014' + formatClock(interval.end)) +
+            '<span class="task-interval-duration">\u8fdb\u884c\u4e2d</span></div></div></div>';
+        }
+        const index = interval.sourceIndex;
+        return '<div class="task-interval" data-interval-index="' + index + '">' +
+          '<div class="task-interval-row"><div class="task-interval-main">' +
+          escapeHtml(formatClock(interval.start) + '\u2014' + formatClock(interval.end)) +
+          '<span class="task-interval-duration">' + escapeHtml(formatDuration(Math.max(0, interval.end - interval.start))) + '</span></div>' +
+          '<div class="task-interval-actions"><button type="button" class="interval-action" data-edit-interval>\u7f16\u8f91</button><button type="button" class="interval-action interval-delete" data-delete-interval>\u6e05\u9664</button></div></div>' +
+          '<form class="interval-editor hidden" data-edit-form="' + index + '">' +
+          '<label>\u5f00\u59cb <input name="start" type="datetime-local" step="1" value="' + escapeHtml(toDateTimeLocal(interval.start)) + '" required></label>' +
+          '<label>\u7ed3\u675f <input name="end" type="datetime-local" step="1" value="' + escapeHtml(toDateTimeLocal(interval.end)) + '" required></label>' +
+          '<div class="interval-editor-actions"><button type="submit" class="interval-action interval-save">\u4fdd\u5b58</button><button type="button" class="interval-action" data-cancel-edit>\u53d6\u6d88</button></div>' +
+          '</form></div>';
+      }).join('')
       : '<div class="task-empty">\u6682\u65e0\u65f6\u95f4\u6bb5</div>';
     const isOpen = openKeys.has(task.taskKey) ? ' open' : '';
     return '<details class="task-card" data-task-key="' + taskKey + '"' + isOpen + '>' +
@@ -244,7 +245,7 @@ async function copyText(text) {
 }
 
 function intervalText(interval) {
-  return formatClock(interval.start) + ' \u2014 ' + formatClock(interval.end);
+  return formatClock(interval.start) + '\u2014' + formatClock(interval.end);
 }
 
 async function getCurrentTab() {
@@ -308,7 +309,7 @@ async function sync() {
 }
 
 function refresh() {
-  sync().catch(() => {});
+  sync().catch(() => { });
 }
 
 chrome.tabs.onActivated.addListener(refresh);
@@ -343,7 +344,7 @@ $('#stopButton').addEventListener('click', () => timerAction('stop'));
 
 $('#copySummary').addEventListener('click', () => {
   if (!state.task) return;
-  copyText(state.task.title + ' \uFF5C\u603B\u8BA1 ' + formatDuration(getTotalMs()));
+  copyText(formatTaskForCopy(state.task));
 });
 
 
@@ -381,22 +382,22 @@ $('#taskList').addEventListener('click', async (event) => {
     const entry = (state.tasks || []).find((task) => task.taskKey === taskKey);
     const response = await chrome.runtime.sendMessage({ type: 'delete-task', taskKey, title: entry?.title });
     if (!response?.deleted) {
-      showToast('\u5DF2\u590D\u5236\u5230\u526A\u8D34\u677F');
+      showToast('清除任务失败，请刷新后重试');
       return;
     }
     await sync();
-    showToast('\u5DF2\u590D\u5236\u5230\u526A\u8D34\u677F');
+    showToast('已清除任务记录');
     return;
   }
 
   if (deleteIntervalButton) {
     const row = deleteIntervalButton.closest('.task-interval');
-    if (!window.confirm('\u786e\u5b9a\u8981\u6e05\u9664\u8fd9\u4e2a\u65f6\u95f4\u6bb5\u5417\uff1f')) return;
+    if (!window.confirm('确定要清除这个时间段吗？')) return;
     const response = await chrome.runtime.sendMessage({
       type: 'delete-interval', taskKey, intervalIndex: row.dataset.intervalIndex
     });
     if (response.task) await refreshAfterMutation(response.task);
-    else showToast('\u6e05\u9664\u65f6\u95f4\u6bb5\u5931\u8d25\uff0c\u8bf7\u5237\u65b0\u540e\u91cd\u8bd5');
+    else showToast('清除时间段失败，请刷新后重试');
     return;
   }
 
@@ -419,7 +420,7 @@ $('#taskList').addEventListener('submit', async (event) => {
   const start = new Date(form.elements.start.value).getTime();
   const end = new Date(form.elements.end.value).getTime();
   if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
-    showToast('\u5DF2\u590D\u5236\u5230\u526A\u8D34\u677F');
+    showToast('请输入有效的起止时间');
     return;
   }
   const response = await chrome.runtime.sendMessage({
@@ -451,7 +452,7 @@ $('#exportSchedule').addEventListener('click', () => {
   link.download = 'work-schedule-' + new Date().toISOString().slice(0, 10) + '.txt';
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 0);
-  showToast('\u5DF2\u590D\u5236\u5230\u526A\u8D34\u677F');
+  showToast('已导出工作日程文件');
 });
 
 state.tick = setInterval(() => {
